@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.subunit.SCT { fill: #ddc; }
+.subunit.WLS { fill: #cdd; }
+.subunit.NIR { fill: #cdc; }
+.subunit.ENG { fill: #dcd; }
+.subunit.IRL { display: none; }
+
+.subunit-boundary {
+  fill: none;
+  stroke: #777;
+  stroke-dasharray: 2,2;
+  stroke-linejoin: round;
+}
+
+.subunit-boundary.IRL {
+  stroke: #aaa;
+}
+
+.place,
+.place-label {
+  fill: #444;
+}
+
+text {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+</style>
+<body>
+<script src="d3.v3.min.js"></script>
+<script src="topojson.v1.min.js"></script>
+<script>
+
+var width = 500,
+    height = 300;
+
+
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("cities/Tokyo.json", function(error, json) {
+    console.log('json:', json);
+    var projection = d3.geo.mercator()
+        .center([json.features[0].properties.mean_bb_xc, json.features[0].properties.mean_bb_yc])
+        .scale(2000 * 5)
+        .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection)
+    .pointRadius(2);
+
+  svg.selectAll(".subunit")
+      .data(json.features)
+      .enter()
+      .append("path")
+      .attr("d", path)
+      .attr('stroke', 'black')
+      .attr('stroke-width', 0)
+      .attr('fill', '#ccc')
+      .on('mouseover', function() {
+          d3.select(this).attr('stroke-width', 1); })
+      .on('mouseout', function() {
+          d3.select(this).attr('stroke-width', 0); }) ;
+});
+
+</script>
+
