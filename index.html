@@ -33,42 +33,66 @@ text {
 
 </style>
 <body>
-<script src="d3.v3.min.js"></script>
-<script src="topojson.v1.min.js"></script>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/topojson.v1.min.js"></script>
+<script src="js/d3-grid.js"></script>
 <script>
 
-var width = 500,
-    height = 300;
-
-
+var width = 600,
+    height = 500;
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-d3.json("cities/Tokyo.json", function(error, json) {
+d3.json("cities/europe.json", function(error, json) {
     console.log('json:', json);
-    var projection = d3.geo.mercator()
-        .center([json.features[0].properties.mean_bb_xc, json.features[0].properties.mean_bb_yc])
-        .scale(2000 * 5)
-        .translate([width / 2, height / 2]);
 
-var path = d3.geo.path()
-    .projection(projection)
-    .pointRadius(2);
+    // create a grid on which to place the cities
+    var rectGrid = d3.layout.grid()
+    .bands()
+    .size([width, height])
+    .padding([0.01, 0.01]);
 
-  svg.selectAll(".subunit")
-      .data(json.features)
-      .enter()
-      .append("path")
-      .attr("d", path)
-      .attr('stroke', 'black')
-      .attr('stroke-width', 0)
-      .attr('fill', '#ccc')
-      .on('mouseover', function() {
-          d3.select(this).attr('stroke-width', 1); })
-      .on('mouseout', function() {
-          d3.select(this).attr('stroke-width', 0); }) ;
+    var displayCityMap = function(feature) {
+        var projection = d3.geo.mercator()
+        .center([feature.properties.mean_bb_xc, feature.properties.mean_bb_yc])
+        .scale(1000 * 5)
+        .translate([rectGrid.nodeSize()[0] / 2, rectGrid.nodeSize()[1] / 2]);
+
+        var path = d3.geo.path()
+        .projection(projection)
+        .pointRadius(2);
+
+        d3.select(this).selectAll(".subunit")
+        .data([feature])
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr('stroke', 'black')
+        .attr('stroke-width', 0)
+        .attr('fill', '#ccc')
+        .on('mouseover', function() {
+            d3.select(this).attr('stroke-width', 1); })
+        .on('mouseout', function() {
+            d3.select(this).attr('stroke-width', 0); }) ;
+        };
+
+    var gridCellGroups = svg.selectAll('.city')
+    .data(rectGrid(json.features))
+    .enter()
+    .append('g')
+    .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
+
+    gridCellGroups.append('rect')
+    .classed('city', true)
+    .attr('width', function(d) { return rectGrid.nodeSize()[0]; })
+    .attr('height', function(d) { return rectGrid.nodeSize()[1]; })
+    .attr('fill', 'transparent')
+    .style('opacity', 0.3)
+
+    gridCellGroups.each(displayCityMap);
+
 });
 
 </script>

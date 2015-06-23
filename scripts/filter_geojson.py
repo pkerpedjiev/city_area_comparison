@@ -4,7 +4,7 @@ import json
 import sys
 from optparse import OptionParser
 
-def has_property(feature, property_name, property_value):
+def has_property(feature, property_name, property_values):
     '''
     Check if a feature has a particular property.
 
@@ -14,12 +14,12 @@ def has_property(feature, property_name, property_value):
     @return: True or False
     '''
     if property_name in feature['properties']:
-        if feature['properties'][property_name].find(property_value) >= 0:
-            return True
-        else:
-            return False
+        for property_value in property_values:
+            if feature['properties'][property_name].find(property_value) >= 0:
+                return True
+        return False
 
-def filter_geojson(json_object, property_name, property_value):
+def filter_geojson(json_object, property_name, property_values):
     '''
     Iterate over the features in a GeoJSON object and return only
     the ones that have the feature property_name and it has a value
@@ -27,11 +27,11 @@ def filter_geojson(json_object, property_name, property_value):
 
     @param json_object: A GeoJSON object
     @param property_name: The property to filter on
-    @param property_value: The value the property should have
+    @param property_values: The values the property can have
     @return: A filtered json object
     '''
 
-    new_features = [f for f in json_object['features'] if has_property(f, property_name, property_value)]
+    new_features = [f for f in json_object['features'] if has_property(f, property_name, property_values)]
     json_object['features'] = new_features
 
     return json_object
@@ -57,7 +57,7 @@ def main():
 
     with open(args[0], 'r') as f:
         json_object = json.load(f)
-        filtered_json_object = filter_geojson(json_object, args[1], args[2])
+        filtered_json_object = filter_geojson(json_object, args[1], args[2:])
 
         print json.dumps(filtered_json_object)
 
