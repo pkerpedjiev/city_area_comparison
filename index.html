@@ -25,6 +25,11 @@
   fill: #444;
 }
 
+.city-label {
+    font-size: 13px;
+    text-anchor: middle;
+}
+
 text {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 10px;
@@ -38,15 +43,26 @@ text {
 <script src="js/d3-grid.js"></script>
 <script>
 
-var width = 600,
-    height = 500;
+var width = 800,
+    height = 600;
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
+var formatCityProperties = function(city) {
+    return "name_conve: " + city.properties.name_conve + "<br>" +
+    "max_pop_al: " + city.properties.max_pop_al + "<br>" + 
+    "max_areakm: " + city.properties.max_areakm + "<br>"
+}
+
 d3.json("cities/europe.json", function(error, json) {
     console.log('json:', json);
+    var densities = json.features.map(function(d) { 
+        return d.properties.max_pop_al / d.properties.max_areakm; })
+    var densityColors = d3.scale.linear().domain(d3.extent(densities))
+    .range(['grey', 'red']);
+    console.log('densities', densities);
 
     // create a grid on which to place the cities
     var rectGrid = d3.layout.grid()
@@ -57,7 +73,7 @@ d3.json("cities/europe.json", function(error, json) {
     var displayCityMap = function(feature) {
         var projection = d3.geo.mercator()
         .center([feature.properties.mean_bb_xc, feature.properties.mean_bb_yc])
-        .scale(1000 * 5)
+        .scale(1200 * 5)
         .translate([rectGrid.nodeSize()[0] / 2, rectGrid.nodeSize()[1] / 2]);
 
         var path = d3.geo.path()
@@ -71,12 +87,29 @@ d3.json("cities/europe.json", function(error, json) {
         .attr("d", path)
         .attr('stroke', 'black')
         .attr('stroke-width', 0)
-        .attr('fill', '#ccc')
+        .attr('fill', function(d) { 
+            return densityColors(d.properties.max_pop_al / d.properties.max_areakm); })
         .on('mouseover', function() {
             d3.select(this).attr('stroke-width', 1); })
         .on('mouseout', function() {
-            d3.select(this).attr('stroke-width', 0); }) ;
+            d3.select(this).attr('stroke-width', 0); })
+        .append('title')
+        .html(formatCityProperties);
+
+        var fontSize = 
+
+        d3.select(this).append('text')
+        .attr('x', rectGrid.nodeSize()[0] / 2)
+        .attr('y', rectGrid.nodeSize()[1])
+        .classed('city-label', true)
+        .text(function(d) { return d.properties.name_conve; })
+
         };
+
+    // sort by area
+    json.features.sort(function(a,b) {
+        return b.properties.max_areakm - a.properties.max_areakm;
+    });
 
     var gridCellGroups = svg.selectAll('.city')
     .data(rectGrid(json.features))
@@ -91,8 +124,7 @@ d3.json("cities/europe.json", function(error, json) {
     .attr('fill', 'transparent')
     .style('opacity', 0.3)
 
-    gridCellGroups.each(displayCityMap);
-
+    gridCellGroups.each(displayCityMap)
 });
 
 </script>

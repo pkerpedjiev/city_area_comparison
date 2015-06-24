@@ -3,4 +3,6 @@ ogr2ogr \
             urban_reas_landscan.json \
             ne_10m_urban_areas_landscan.shp
 
+* Change ZÌùrich to Zurich
+
 python scripts/filter_geojson.py ne_10m_urban_areas_landscan.json name_conve London > london.json
